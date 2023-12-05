@@ -96,7 +96,7 @@ T NormalizeAngle(const T& angle_degrees) {
   	return angle_degrees;
 };
 
-class AngleLocalParameterization {
+class AngleLocalManifold {
  public:
 
   template <typename T>
@@ -108,8 +108,8 @@ class AngleLocalParameterization {
     return true;
   }
 
-  static ceres::LocalParameterization* Create() {
-    return (new ceres::AutoDiffLocalParameterization<AngleLocalParameterization,
+  static ceres::Manifold* Create() {
+    return (new ceres::AutoDiffLocalParameterization<AngleLocalManifold,
                                                      1, 1>);
   }
 };
