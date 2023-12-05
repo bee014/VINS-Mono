@@ -85,7 +85,15 @@ private:
 	ros::Publisher pub_pose_graph;
 	ros::Publisher pub_path[10];
 };
-
+// Normalizes the angle in radians between [-pi and pi).
+template <typename T>
+inline T NormalizeAngle(const T& angle_radians) {
+  // Use ceres::floor because it is specialized for double and Jet types.
+  T two_pi(2.0 * ceres::constants::pi);
+  return angle_radians -
+         two_pi * ceres::floor((angle_radians + T(ceres::constants::pi)) / two_pi);
+}
+// Normalizes Angles in Degrees
 template <typename T>
 T NormalizeAngleDeg(const T& angle_degrees) {
   if (angle_degrees > T(180.0))
