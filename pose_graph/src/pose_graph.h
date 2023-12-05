@@ -87,7 +87,7 @@ private:
 };
 
 template <typename T>
-T NormalizeAngle(const T& angle_degrees) {
+T NormalizeAngleDeg(const T& angle_degrees) {
   if (angle_degrees > T(180.0))
   	return angle_degrees - T(360.0);
   else if (angle_degrees < T(-180.0))
@@ -96,24 +96,28 @@ T NormalizeAngle(const T& angle_degrees) {
   	return angle_degrees;
 };
 
-class AngleLocalManifold {
+// Defines a manifold for updating the angle to be constrained in [-pi to pi).
+class AngleManifold {
  public:
-
   template <typename T>
-  bool operator()(const T* theta_radians, const T* delta_theta_radians,
-                  T* theta_radians_plus_delta) const {
-    *theta_radians_plus_delta =
-        NormalizeAngle(*theta_radians + *delta_theta_radians);
-
+  bool Plus(const T* x_radians,
+            const T* delta_radians,
+            T* x_plus_delta_radians) const {
+    *x_plus_delta_radians = NormalizeAngle(*x_radians + *delta_radians);
     return true;
   }
-
+  template <typename T>
+  bool Minus(const T* y_radians,
+             const T* x_radians,
+             T* y_minus_x_radians) const {
+    *y_minus_x_radians =
+        NormalizeAngle(*y_radians) - NormalizeAngle(*x_radians);
+    return true;
+  }
   static ceres::Manifold* Create() {
-    return (new ceres::AutoDiffLocalParameterization<AngleLocalManifold,
-                                                     1, 1>);
+    return new ceres::AutoDiffManifold<AngleManifold, 1, 1>;
   }
 };
-
 template <typename T> 
 void YawPitchRollToRotationMatrix(const T yaw, const T pitch, const T roll, T R[9])
 {
@@ -182,7 +186,7 @@ struct FourDOFError
 		residuals[0] = (t_i_ij[0] - T(t_x));
 		residuals[1] = (t_i_ij[1] - T(t_y));
 		residuals[2] = (t_i_ij[2] - T(t_z));
-		residuals[3] = NormalizeAngle(yaw_j[0] - yaw_i[0] - T(relative_yaw));
+		residuals[3] = NormalizeAngleDeg(yaw_j[0] - yaw_i[0] - T(relative_yaw));
 
 		return true;
 	}
@@ -228,7 +232,7 @@ struct FourDOFWeightError
 		residuals[0] = (t_i_ij[0] - T(t_x)) * T(weight);
 		residuals[1] = (t_i_ij[1] - T(t_y)) * T(weight);
 		residuals[2] = (t_i_ij[2] - T(t_z)) * T(weight);
-		residuals[3] = NormalizeAngle((yaw_j[0] - yaw_i[0] - T(relative_yaw))) * T(weight) / T(10.0);
+		residuals[3] = NormalizeAngleDeg((yaw_j[0] - yaw_i[0] - T(relative_yaw))) * T(weight) / T(10.0);
 
 		return true;
 	}

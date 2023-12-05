@@ -13,11 +13,12 @@
 
 #include "camodocal/camera_models/CameraFactory.h"
 #include "camodocal/sparse_graph/Transform.h"
-#include "camodocal/gpl/EigenQuaternionParameterization.h"
 #include "camodocal/gpl/EigenUtils.h"
 #include "camodocal/camera_models/CostFunctionFactory.h"
 
 #include "ceres/ceres.h"
+#include "ceres/manifold.h"
+
 namespace camodocal
 {
 
@@ -505,9 +506,9 @@ CameraCalibration::optimize(CameraPtr& camera,
         }
 
         ceres::Manifold* quaternionParameterization =
-            new EigenQuaternionParameterization;
+            new ceres::EigenQuaternionManifold;
 
-        problem.SetParameterization(transformVec.at(i).rotationData(),
+        problem.SetManifold(transformVec.at(i).rotationData(),
                                     quaternionParameterization);
     }
 
